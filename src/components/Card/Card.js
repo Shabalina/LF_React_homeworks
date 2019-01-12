@@ -13,4 +13,4 @@ class Card extends PureComponent {
   }
 }
 
-export default Card;
+export default Card; 
