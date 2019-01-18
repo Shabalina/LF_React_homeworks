@@ -44,4 +44,4 @@ const withAuth = WrappedComponent => {
   return AuthHOC;
 };
 
-export { AuthProvider, withAuth };
+export { AuthProvider, withAuth }; 
