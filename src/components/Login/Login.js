@@ -18,7 +18,7 @@ class Login extends PureComponent {
     this.setState({ key: event.target.value });
   };
 
-  handleKeyPress = event => {
+  handleKeyPress = event => { 
     const { addApiKey } = this.props;
     const { key } = this.state;
 
@@ -31,8 +31,9 @@ class Login extends PureComponent {
 
   render() {
     const { isAuthorized } = this.props;
+    console.log(isAuthorized)
     const { key } = this.state;
-
+    
     if (isAuthorized) return <Redirect to="/search" />;
 
     return (

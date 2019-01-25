@@ -7,7 +7,7 @@ class PrivateRoute extends PureComponent {
   render() {
     const { isAuthorized, component, ...rest } = this.props;
 
-    return <Route {...rest} render={this.renderRoute} />;
+    return <Route {...rest} render={this.renderRoute} />; 
   }
   renderRoute = props => {
     const { isAuthorized, component: Component } = this.props;
