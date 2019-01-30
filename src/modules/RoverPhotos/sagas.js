@@ -1,46 +1,47 @@
+// Реализуйте саги
 import { takeEvery, select, put, call, fork } from 'redux-saga/effects';
-import { getApiKey } from '../Auth';
-import { getPhotos } from './api';
-import { getSavedPhotos, rovers } from './RoverPhotos';
+import {getApiKey} from '../Auth'
+import { changeSol, fetchPhotosRequest, fetchPhotosSuccess, fetchPhotosFailure } from './actions';
 import {
-  fetchPhotosRequest,
-  fetchPhotosSuccess,
-  fetchPhotosFailure,
-  changeSol
-} from './actions';
+  getCurrentSol,
+  isRoverHasPhotosForSol,
+  roversName
+} from './RoverPhotos';
+import { getPhotos } from './api';
 
 function* changeSolFlow(action) {
-  for (const name of rovers) {
-    const photos = yield select(getSavedPhotos, name, action.payload);
-
-    if (!photos) {
-      yield put(fetchPhotosRequest({ name, sol: action.payload }));
+    const sol = yield select(getCurrentSol);
+    for (let name of roversName) {
+        const isRoverHasPhotos = yield select(state =>
+        isRoverHasPhotosForSol(state, name, sol)        
+      );
+      if (!isRoverHasPhotos) {
+        yield put(fetchPhotosRequest({ name, sol}));
+      }
+    }
+    //yield take(changeSol)
+  //}
+}  
+  
+  function* fetchPhotoFlow(action) {
+    const { sol, name } = action.payload;
+    const apiKey = yield select(getApiKey);
+  
+    try {
+      const { photos } = yield call(getPhotos, apiKey, name, sol);
+  
+      yield put(fetchPhotosSuccess({ name, sol, photos }));
+    } catch (error) {
+      yield put(fetchPhotosFailure(sol, name, error));
     }
   }
-}
-
-function* changeSolWatcher() {
-  yield takeEvery(changeSol, changeSolFlow);
-}
-
-function* fetchPhotoFlow(action) {
-  const { sol, name } = action.payload;
-  const apiKey = yield select(getApiKey);
-
-  try {
-    const { photos } = yield call(getPhotos, apiKey, name, sol);
-
-    yield put(fetchPhotosSuccess({ name, sol, photos }));
-  } catch (error) {
-    yield put(fetchPhotosFailure(sol, name, error));
+  
+  function* fetchRoverWatcher() {
+    yield takeEvery(fetchPhotosRequest, fetchPhotoFlow);
   }
-}
-
-function* fetchRoverWatcher() {
-  yield takeEvery(fetchPhotosRequest, fetchPhotoFlow);
-}
-
-export default function*() {
-  yield fork(fetchRoverWatcher);
-  yield fork(changeSolWatcher);
-}
+  
+  export default function*() {
+    
+    yield fork(fetchRoverWatcher);
+    yield takeEvery(changeSol, changeSolFlow);    
+  }

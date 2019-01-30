@@ -1,72 +1,81 @@
+// Здесь вам нужно реализовать вью
+
+// Подключите его к редакс роутеру
+// Вам потребуются селекторы для получения выбранного сола
+// и списка фотографий
+
+// Так же вы будете диспатчить экшены CHANGE_SOL и FETCH_PHOTOS_REQUEST
+// Эти экшены находятся в модуле ROVER PHOTOS
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
-import SelectSol from '../SelectSol';
 import RoverPhotos from '../RoverPhotos';
+import SelectSol from '../SelectSol';
 import styles from './RoversViewer.module.css';
-import { getRoversPhotos, rovers } from '../../modules/RoverPhotos';
-import {
-  getSol,
-  changeSol,
-  fetchPhotosRequest
-} from '../../modules/RoverPhotos';
+import { connect } from 'react-redux';
+import { getApiKey } from '../../modules/Auth';
+import { getCurrentSol,getMinSol, getMaxSol, roversName,
+  changeSol, getRovers, fetchPhotosRequest} from '../../modules/RoverPhotos';
 
-class RoverViewers extends PureComponent {
-  componentDidMount() {
-    const { fetchPhotosRequest, sol } = this.props;
+class RoversViewer extends PureComponent {
 
-    rovers.forEach(name => fetchPhotosRequest({ name, sol: sol.current }));
+  componentDidMount(){
+    const {fetchPhotosRequest, selectedSol, apiKey} = this.props;
+    const sol = selectedSol
+    roversName.map(name => fetchPhotosRequest({apiKey, name, sol}))
   }
 
-  changeSol = value => {
-    const { changeSol, sol } = this.props;
-
-    value !== sol.current && changeSol(value);
-  };
-
-  renderRoversPhoto = () => {
-    const { photos, sol } = this.props;
-
-    return rovers.map(rover => {
-      const currentPhotos = photos[rover][sol.current];
-      const roverPhotos =
-        !currentPhotos || !currentPhotos.isLoaded ? [] : currentPhotos.photos;
-
-      if (currentPhotos && currentPhotos.error) {
-        return <div>{currentPhotos.error}</div>;
-      }
-
-      return <RoverPhotos name={rover} photos={roverPhotos} key={rover} />;
-    });
-  };
-
-  render() {
-    const { sol } = this.props;
-
-    return (
-      <div className={styles.root}>
-        <SelectSol
-          minSol={sol.min}
-          maxSol={sol.max}
-          selectedSol={sol.current}
-          changeSol={this.changeSol}
-        />
-        <div className={styles.container}>{this.renderRoversPhoto()}</div>
-      </div>
-    );
+  solChanging(newValue){
+    const {minSol, maxSol, selectedSol, changeSol} = this.props
+    if (newValue >= minSol && 
+        newValue <= maxSol && 
+        newValue !== selectedSol) {
+          changeSol(newValue)
+        }
   }
+
+  render(){
+    const {minSol, maxSol, selectedSol, allRovers} = this.props
+    const {changeSol} = this.props
+      return(
+       <div className={styles.root}>
+       
+          <SelectSol 
+            minSol={minSol} 
+            maxSol={maxSol} 
+            selectedSol={selectedSol} 
+            changeSol={changeSol}
+            />
+            <div className={styles.root1}>
+              {
+                roversName.map(rover => {
+                  const renderPhotos = allRovers[rover][selectedSol] 
+                  ? allRovers[rover][selectedSol].photos
+                  : []
+                  return (
+                  <RoverPhotos key={rover} name={rover} photos={renderPhotos}/>   
+                  )                
+                }
+                )
+              }
+            </div>
+       </div>
+      )
+    }
+  
+
+
 }
 
-const mapStateToProps = state => ({
-  sol: getSol(state),
-  photos: getRoversPhotos(state)
-});
 
-const mapDispatchToProps = {
-  changeSol,
-  fetchPhotosRequest
-};
+const mapStateToProps = state => ({
+  allRovers: getRovers(state),
+  maxSol: getMaxSol(state),
+  minSol: getMinSol(state),
+  selectedSol: getCurrentSol(state),
+  apiKey: getApiKey(state)
+})
 
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
-)(RoverViewers);
+  {changeSol, fetchPhotosRequest}
+)(RoversViewer);
+

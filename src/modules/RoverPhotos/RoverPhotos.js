@@ -1,66 +1,84 @@
-import { handleActions } from 'redux-actions';
+// Реализуйте редьюсер
+// Файл с тестами RoverPhotos.test.js поможет вам в этом
+
+// Реализуйте редьюсер
 import { combineReducers } from 'redux';
-import {
-  fetchPhotosRequest,
-  fetchPhotosSuccess,
-  fetchPhotosFailure,
-  changeSol
-} from './actions';
+import { handleActions} from 'redux-actions';
+import {changeSol, fetchPhotosRequest, fetchPhotosSuccess, fetchPhotosFailure} from './actions';
 
-export const rovers = ['curiosity', 'opportunity', 'spirit'];
-
-const photos = combineReducers(
-  rovers.reduce((pv, rover) => {
-    pv[rover] = handleActions(
-      {
-        [fetchPhotosRequest]: (state, action) => {
-          const { name, sol } = action.payload;
-          return name === rover
-            ? {
-                ...state,
-                [sol]: { photos: null, isLoaded: false }
-              }
-            : state;
-        },
-        [fetchPhotosSuccess]: (state, action) => {
-          const { name, sol, photos } = action.payload;
-          return name === rover
-            ? { ...state, [sol]: { photos, isLoaded: true } }
-            : state;
-        },
-        [fetchPhotosFailure]: (state, action) => {
-          const { name, sol, error } = action.payload;
-          return name === rover
-            ? { ...state, [sol]: { error, isLoading: false } }
-            : state;
-        }
-      },
-      {}
-    );
-    return pv;
-  }, {})
-);
 
 const sol = handleActions(
-  { [changeSol]: (state, action) => ({ ...state, current: action.payload }) },
-  { current: 1, min: 1, max: 100 }
-);
+    {[changeSol]:(_state, action) => ({..._state, current:action.payload })},
+    {
+        max: 3,
+        min: 1,
+        current: 1
+    })
+
+export const roversName = ['curiosity', 'opportunity', 'spirit'];
+    
+const photos = combineReducers(
+    roversName.reduce((pv, rover) => {
+      pv[rover] = handleActions(  
+        {
+          [fetchPhotosRequest]:(_state, action) => {
+          var { name, sol } = action.payload;
+          return name === rover 
+              ? { ..._state,
+                   [sol]:{
+                        isLoading: true,
+                        photos:[],
+                        isLoaded:false
+                      }
+                    }
+                : _state
+              },
+                  
+            [fetchPhotosSuccess]:(state, action) => {
+              var { name, sol, photos } = action.payload;
+              return name === rover 
+                  ? { ...state,
+                      [sol]:{
+                          isLoading: false,
+                          photos,
+                          isLoaded:true
+                        }
+                      }
+                  : state
+                    },
+                
+    [fetchPhotosFailure]:(_state, {payload: {name, sol, error}}) => {
+          return name === rover 
+          ? { ..._state,
+              [sol]:{
+                  isLoading: false,
+                  error,
+                  isLoaded:true
+                }
+              }
+          : _state
+            }
+        },
+        {}
+    );
+    return pv
+  }, {})
+)
+
 
 export default combineReducers({
-  photos,
-  sol
-});
+  sol,
+  photos
+})
 
-export const getSol = state => state.roverPhotos.sol;
-export const getRoversPhotos = state => state.roverPhotos.photos;
-export const getSavedPhotos = (state, roverName, solId) => {
-  const {
-    roverPhotos: { photos }
-  } = state;
-
-  if (!photos[roverName][solId]) {
-    return null;
+export const getCurrentSol = state => state.roverPhotos.sol.current
+export const getMaxSol = state => state.roverPhotos.sol.max;
+export const getMinSol = state => state.roverPhotos.sol.min;
+export const getRovers = state => state.roverPhotos.photos;
+export const isRoverHasPhotosForSol = ( state, name, sol) => {
+  //console.log('isRoverHasFotosforsol', state, name, sol)
+  if (!state.roverPhotos.photos[name][sol]) {
+    return false;
   }
-
-  return photos[roverName][solId].photos;
-};
+  return photos[name][sol].isLoaded;
+  }
