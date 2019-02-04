@@ -1,19 +1,36 @@
 // Реализуйте редьюсер
 import { combineReducers } from 'redux';
 import { handleActions } from 'redux-actions';
-import {addKey} from './actions';
+import {loginSuccess, loginError, logOut} from './actions';
 
-const apiKey = handleActions(
+const isAuthorized = handleActions(
     {
-        [addKey]: (_state, action) => action.payload
-    }, null
+        [loginSuccess]:() => true,
+        [loginError]:() => false,
+        [logOut]:() => false
+
+    },false,
 )
 
+const error = handleActions(
+    {
+        [loginSuccess]:() => null,
+        [loginError]:(_state, action) => action.payload,
+        [logOut]:() => null
+
+    },null,
+)   
+
 export default combineReducers({
-    apiKey
+    isAuthorized,
+    error
 })
 
-export const getApiKey = state => state.auth.apiKey
-export const getIsAuthorized = state => state.auth.apiKey ? true : false;
+//export const getApiKey = state => state.auth.apiKey
+export const getIsAuthorized = state => state.auth.isAuthorized;
+export const getIsError = state => {
+    console.log('from reducer', !!state.auth.error)
+    return !!state.auth.error
+};
 
 
